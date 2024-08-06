@@ -1,12 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Unity.Netcode;
 using Unity.Netcode.Components;
+using System.Collections;
+using Unity.Netcode;
 using TMPro;
 using System;
-using System.Collections;
-using Unity.Collections;
-using Steamworks;
 
 namespace AC
 {
@@ -24,11 +22,15 @@ namespace AC
         public Animator levelChange;
         public Animator levelChangeText;
         public GameObject torch;
-        public ParticleSystem potionParticle;
+        public GameObject passcode;
+        public GameObject timer;
         public Mesh[] normalMeshMale;
         public Mesh[] armMeshMale;
         public GameObject[] spawnPrefs;
         public String[] levelNames;
+        public GameObject[] books;
+        public GameObject[] cogs;
+        public GameObject[] displays;
 
         [Header("Player Settings")]
         [Range(0, 100)] public float walkSpeed;
@@ -40,6 +42,15 @@ namespace AC
         [Header("Timer Settings")]
         public TMP_Text timeText;
         public float timeRemaining;
+
+        [Header("Light Settings")]
+        public Light playerLight;
+        public float flickerDuration = 2f;
+        public float flickerIntensity = 0.5f;
+        public float flickerFrequency = 0.1f;
+        public float dimAmount = 0.5f;
+        private float baseIntensity;
+        public bool isFlickering = false;
 
         public NetworkVariable<float> health = new NetworkVariable<float>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
         private NetworkVariable<int> audioClipNum = new NetworkVariable<int>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
@@ -55,6 +66,12 @@ namespace AC
         private Vector2 frameVelocity;
         private float currentMovingSpeed;
         private int levelNumber;
+        private int cog1;
+        private int cog2;
+        private int cog3;
+        private int totalCog1;
+        private int totalCog2;
+        private int totalCog3;
 
         private bool isRunning;
         private bool isCrouching;
@@ -84,6 +101,11 @@ namespace AC
             ChangeSkin();
             StartCoroutine(ChangePlayerPos(0, spawnPoint));
             StartCoroutine(ChangeLevel(0));
+
+            if (playerLight != null)
+            {
+                baseIntensity = playerLight.intensity;
+            }
         }
 
         private void Update()
@@ -152,7 +174,7 @@ namespace AC
             velocity += frameVelocity;
             velocity.y = Mathf.Clamp(velocity.y, -90, 90);
 
-            if (!settingsObject.activeSelf) {
+            if (!settingsObject.activeSelf || !passcode.activeSelf) {
                 transform.localRotation = Quaternion.AngleAxis(velocity.x, Vector3.up);
                 playerCam.transform.localRotation = Quaternion.AngleAxis(-velocity.y, Vector3.right);
             }
@@ -189,19 +211,19 @@ namespace AC
             {
                 if (isCrouching)
                 {
-                    audioSync.ChangePitch(1.2f);
+                    audioSync.ChangePitch(1f);
                     networkAnimator.SetTrigger("CrouchWalk");
                     currentMovingSpeed = crouchSpeed;
                 }
                 else if (isRunning)
                 {
-                    audioSync.ChangePitch(1.6f);
+                    audioSync.ChangePitch(1.4f);
                     networkAnimator.SetTrigger("Run");
                     currentMovingSpeed = runSpeed;
                 }
                 else
                 {
-                    audioSync.ChangePitch(1.4f);
+                    audioSync.ChangePitch(1.2f);
                     networkAnimator.SetTrigger("Walk");
                     currentMovingSpeed = walkSpeed;
                 }
@@ -222,6 +244,7 @@ namespace AC
             if (Input.GetKeyDown(settings.keys["Crouch"]))
             {
                 gameObject.GetComponent<Collider>().transform.localScale = new Vector3(1, 0.75f, 1);
+                
             }
             if (Input.GetKeyUp(settings.keys["Crouch"]))
             {
@@ -233,12 +256,18 @@ namespace AC
             {
                 playerRb.AddForce(Vector3.up * 5 * jumpStrength);
                 networkAnimator.SetTrigger("Jump");
-                StartCoroutine(CanJump(1f));
+                StartCoroutine(CanJump(0.5f));
             }
 
             //Settings
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                if (passcode.activeSelf) {
+                    passcode.SetActive(false);
+                    Cursor.visible = false;
+                    return;
+                }
+
                 if (!settingsObject.activeSelf)
                 {
                     settingsObject.SetActive(true);
@@ -248,7 +277,7 @@ namespace AC
                 {
                     settingsObject.SetActive(false);
                     UpdateCursor(false);
-                }
+                }  
             }
 
             //Reload
@@ -275,7 +304,7 @@ namespace AC
         private void MovePlayer() {
             Vector2 targetVelocity = new Vector2(Input.GetAxis("Horizontal") * currentMovingSpeed / 10, Input.GetAxis("Vertical") * currentMovingSpeed / 10);
             if (isOnIce)
-                playerRb.AddForce(transform.rotation * new Vector3(targetVelocity.x, playerRb.velocity.y, targetVelocity.y));
+                playerRb.AddForce(transform.rotation * new Vector3(targetVelocity.x, 0, targetVelocity.y));
             else
                 playerRb.velocity = transform.rotation * new Vector3(targetVelocity.x, playerRb.velocity.y, targetVelocity.y);
         }
@@ -335,14 +364,48 @@ namespace AC
                     }
                     else if (other.transform.tag == "Entrance")
                     {
-                       levelChange.Play("LevelChange");
-                       StartCoroutine(ChangePlayerPos(0.5f, other.transform.position - new Vector3(0, 11, 0)));
-                       StartCoroutine(ChangeLevel(0.5f));
-                       levelNumber++;
+                        if (levelNumber == 0) {
+                            passcode.SetActive(true);
+                            UpdateCursor(true);
+                        } else {
+                            NextLevel(other.transform);
+                        }
                     }
-                    else if (other.transform.tag == "Potion") {
-                        StartCoroutine(DrinkPotion(other.transform.GetComponent<Potion>()));
-                        other.transform.GetComponent<NetworkObject>().Despawn(true);
+                    else if (other.transform.tag == "Book") {
+                        int bookValue = (int) other.transform.GetComponent<Book>().bookType;
+                        books[bookValue].SetActive(true);
+                        books[bookValue].GetComponentInChildren<TMP_Text>().text = other.transform.GetComponent<Book>().codeInt.ToString();
+                    }
+                    else if (other.transform.tag == "Cog1" || other.transform.tag == "Cog2" || other.transform.tag == "Cog3") {
+                        other.transform.GetComponent<Animator>().SetTrigger("Turn");
+                        other.transform.GetComponent<AudioSource>().Play();
+                        if (other.transform.tag == "Cog1") {
+                            cog1++;
+                            cogs[0].SetActive(true);
+                            cogs[0].GetComponentInChildren<TMP_Text>().text = cog1 + " / " + totalCog1;
+                        } else if (other.transform.tag == "Cog2") {
+                            cog2++;
+                            cogs[1].SetActive(true);
+                            cogs[1].GetComponentInChildren<TMP_Text>().text = cog2 + " / " + totalCog2;
+                        } else if (other.transform.tag == "Cog3") {
+                            cog3++;
+                            cogs[2].SetActive(true);
+                            cogs[2].GetComponentInChildren<TMP_Text>().text = cog3 + " / " + totalCog3;
+                        }
+                         other.transform.tag = "Untagged";
+
+                         if (cog1 == totalCog1 && cog2 == totalCog2 && cog3 == totalCog3) {
+                            Collider[] colliders = Physics.OverlapSphere(GameObject.FindGameObjectWithTag("GateOpener").transform.position, 15f);
+                            foreach (Collider collider in colliders)
+                            {
+                                if (collider.CompareTag("Gate"))
+                                {
+                                    collider.GetComponent<Gate>().ChangeStateServerRpc();
+                                    collider.GetComponent<AudioSync>().PlaySound(0);
+                                    audioSync.PlaySound(8);
+                                }
+                            }
+                         }
                     }
                 }
                 else
@@ -381,8 +444,11 @@ namespace AC
                     {
                         ChangeDescriptionText("Press " + settings.keys["Interact"] + " to enter the next floor");
                     }
-                    else if (other.transform.tag == "Potion") {
-                        ChangeDescriptionText("Press " + settings.keys["Interact"] + " to drink " + other.transform.GetComponent<Potion>().potionType);
+                    else if (other.transform.tag == "Book") {
+                        ChangeDescriptionText(other.transform.GetComponent<Book>().bookType + " " + other.transform.GetComponent<Book>().codeInt.ToString());
+                    }
+                    else if (other.transform.tag == "Cog1" || other.transform.tag == "Cog2" || other.transform.tag == "Cog3") {
+                        ChangeDescriptionText("Press " + settings.keys["Interact"] + " to turn");
                     }
                     else
                     {
@@ -396,6 +462,16 @@ namespace AC
             }
 
             levelChangeText.gameObject.GetComponent<TMP_Text>().text = levelNames[levelNumber];
+        }
+
+        public void NextLevel(Transform other) {
+            levelChange.Play("LevelChange");
+            StartCoroutine(ChangePlayerPos(0.5f, other.transform.position - new Vector3(0, 14, 0)));
+            StartCoroutine(ChangeLevel(0.5f));
+            levelNumber++;
+
+            displays[levelNumber-1].SetActive(false);
+            displays[levelNumber].SetActive(true);
         }
 
         private void Timer() {
@@ -425,6 +501,8 @@ namespace AC
             levelChangeText.SetTrigger("LevelChange");
             StartCoroutine(ChangePlayerPos(0, spawnPoint));
             health.Value = 100;
+            playerRb.velocity = Vector3.zero;
+            playerRb.angularVelocity = Vector3.zero;
             UpdateCursor(false);
         }
 
@@ -442,6 +520,37 @@ namespace AC
             int seconds = Mathf.FloorToInt(timeToDisplay % 60);
             int milliseconds = Mathf.FloorToInt((timeToDisplay * 1000) % 1000);
             timeText.text = string.Format("{0:00}:{1:00}:{2:000}", minutes, seconds, milliseconds);
+        }
+
+        public IEnumerator FlickerLight()
+        {
+            isFlickering = true;
+            float endTime = Time.time + flickerDuration;
+            float dimTarget = baseIntensity * dimAmount;
+            float dimRate = (baseIntensity - dimTarget) / (flickerDuration / 2);
+
+            while (playerLight.intensity > dimTarget && Time.time < endTime - flickerDuration / 2)
+            {
+                playerLight.intensity -= dimRate * Time.deltaTime;
+                yield return null;
+            }
+
+            playerLight.intensity = dimTarget;
+
+            while (Time.time < endTime)
+            {
+                playerLight.intensity = dimTarget + UnityEngine.Random.Range(-flickerIntensity, flickerIntensity);
+                yield return new WaitForSeconds(flickerFrequency);
+            }
+
+            while (playerLight.intensity < baseIntensity)
+            {
+                playerLight.intensity += dimRate * Time.deltaTime;
+                yield return null;
+            }
+
+            playerLight.intensity = baseIntensity;
+            isFlickering = false;
         }
 
         //Networking
@@ -466,8 +575,11 @@ namespace AC
             SpawnFire();
             SpawnDoors();
             SpawnGates();
+            passcode.GetComponentInParent<Padlock>().FindBooks();
+            totalCog1 = GameObject.FindGameObjectsWithTag("Cog1").Length;
+            totalCog2 = GameObject.FindGameObjectsWithTag("Cog2").Length;
+            totalCog3 = GameObject.FindGameObjectsWithTag("Cog3").Length;
             //SpawnMonsters();
-            SpawnPotions();
         }
 
         public void SpawnFire()
@@ -543,38 +655,6 @@ namespace AC
             foreach (GameObject snake in snakes)
             {
                 SpawnObjectServerRpc(snake.transform.position, snake.transform.rotation, 17);
-            }
-        }
-
-        public void SpawnPotions() {
-            GameObject[] potions1 = GameObject.FindGameObjectsWithTag("Potion1");
-            foreach (GameObject potion1 in potions1)
-            {
-                SpawnObjectServerRpc(potion1.transform.position, potion1.transform.rotation, 6);
-            }
-
-            GameObject[] potions2 = GameObject.FindGameObjectsWithTag("Potion2");
-            foreach (GameObject potion2 in potions2)
-            {
-                SpawnObjectServerRpc(potion2.transform.position, potion2.transform.rotation, 7);
-            }
-
-            GameObject[] potions3 = GameObject.FindGameObjectsWithTag("Potion3");
-            foreach (GameObject potion3 in potions3)
-            {
-                SpawnObjectServerRpc(potion3.transform.position, potion3.transform.rotation, 8);
-            }
-
-            GameObject[] potions4 = GameObject.FindGameObjectsWithTag("Potion4");
-            foreach (GameObject potion4 in potions4)
-            {
-                SpawnObjectServerRpc(potion4.transform.position, potion4.transform.rotation, 9);
-            }
-
-            GameObject[] potions5 = GameObject.FindGameObjectsWithTag("Potion5");
-            foreach (GameObject potion5 in potions5)
-            {
-                SpawnObjectServerRpc(potion5.transform.position, potion5.transform.rotation, 10);
             }
         }
 
@@ -702,41 +782,6 @@ namespace AC
             torch.GetComponent<Collider>().enabled = true;
             yield return new WaitForSeconds(0.5f);
             torch.GetComponent<Collider>().enabled = false;
-        }
-
-        private IEnumerator DrinkPotion(Potion potion) {
-            var mainModle = potionParticle.main;
-            if (potion.potionType == Potion.PotionType.Speed) {
-                walkSpeed += 20;
-                runSpeed += 20;
-                mainModle.startColor = Color.blue;
-            } else if (potion.potionType == Potion.PotionType.Healing) {
-                health.Value = 100;
-                mainModle.startColor = Color.yellow;
-            } else if (potion.potionType == Potion.PotionType.Invincibility) {
-                isInvincible = true;
-                mainModle.startColor = Color.white;
-            } else if (potion.potionType == Potion.PotionType.Strength) {
-                torch.GetComponent<TrapDamage>().damage *= 2;
-                mainModle.startColor = Color.red;
-            } else if (potion.potionType == Potion.PotionType.Jumping) {
-                jumpStrength *= 2;
-                mainModle.startColor = Color.green;
-            }
-            yield return new WaitForSeconds(potion.duration);
-            if (potion.potionType == Potion.PotionType.Speed) {
-                walkSpeed -= 20;
-                runSpeed -= 20;
-            } else if (potion.potionType == Potion.PotionType.Healing) {
-                health.Value = 100;
-            } else if (potion.potionType == Potion.PotionType.Invincibility) {
-                isInvincible = false;
-            } else if (potion.potionType == Potion.PotionType.Strength) {
-                torch.GetComponent<TrapDamage>().damage /= 2;
-            } else if (potion.potionType == Potion.PotionType.Jumping) {
-                jumpStrength /= 2;
-            }
-            mainModle.startColor = Color.black;
         }
     }
 }

@@ -16,7 +16,7 @@ namespace AC
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.tag == "Player")
+            if (other.tag == "Player" || other.tag == "Monster")
             {
                 StartCoroutine(ActivateTrap());
             }

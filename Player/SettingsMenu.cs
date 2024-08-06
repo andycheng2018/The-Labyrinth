@@ -20,6 +20,7 @@ namespace AC
         public GameObject postProcessing;
         public Toggle postProcessingToggle;
         public Toggle antiAliasingToggle;
+        public Toggle showTimerToggle;
 
         [Header("Control Settings")]
         public TMP_Text jump;
@@ -67,6 +68,7 @@ namespace AC
             renderDistanceSlider.onValueChanged.AddListener(SetRenderDistance);
             postProcessingToggle.onValueChanged.AddListener(SetPostProcessing);
             antiAliasingToggle.onValueChanged.AddListener(SetAntiAliasing);
+            showTimerToggle.onValueChanged.AddListener(SetShowTimer);
 
             //Controls
             keys.Add("Jump", (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Jump", "Space")));
@@ -171,6 +173,21 @@ namespace AC
                 antiAliasingToggle.isOn = false;
             }
             PlayerPrefs.SetInt("AntiAliasing", boolToInt(enableAntiAliasing));
+        }
+
+        private void SetShowTimer(bool enableShowTimer)
+        {
+            if (enableShowTimer)
+            {
+                if (player != null)
+                    player.timer.SetActive(true);
+            }
+            else
+            {
+                if (player != null)
+                    player.timer.SetActive(false);
+            }
+            PlayerPrefs.SetInt("ShowTimer", boolToInt(enableShowTimer));
         }
 
         //Controls
@@ -323,6 +340,7 @@ namespace AC
             SetRenderDistance(100);
             SetPostProcessing(true);
             SetAntiAliasing(true);
+            SetShowTimer(false);
 
             //Controls
             keys["Jump"] = KeyCode.Space;
@@ -359,6 +377,7 @@ namespace AC
                 SetRenderDistance(PlayerPrefs.GetFloat("RenderDistance"));
                 SetPostProcessing(intToBool(PlayerPrefs.GetInt("PostProcessing", 0)));
                 SetAntiAliasing(intToBool(PlayerPrefs.GetInt("AntiAliasing", 0)));
+                SetShowTimer(intToBool(PlayerPrefs.GetInt("ShowTimer", 0)));
 
                 //Video
                 SetResolution(PlayerPrefs.GetInt("Resolution", 0));

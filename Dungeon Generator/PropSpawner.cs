@@ -9,10 +9,17 @@ namespace AC
         public int numberOfProps;
         public float spawnAreaWidth;
         public float spawnAreaLength;
+        public bool useSpawnPoints;
+        public Transform[] spawnPoints;
+        public float spawnProb = 0.1f;
 
         private void Start()
         {
-            SpawnProps();
+            if (useSpawnPoints) {
+                SpawnPoint();
+            } else {
+                SpawnProps();
+            }
         }
 
         private void SpawnProps()
@@ -27,7 +34,18 @@ namespace AC
                 );
                 Quaternion randomRotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
 
-                Instantiate(selectedProp, transform.position + new Vector3(-7, 0, 7f) + randomPosition, randomRotation);   
+                var obj = Instantiate(selectedProp, transform.position + new Vector3(-7, 0, 7f) + randomPosition, randomRotation);
+                obj.transform.SetParent(transform);
+            }
+        }
+
+        private void SpawnPoint() {
+            if (Random.value <= spawnProb)
+            {
+                GameObject selectedProp = propPrefabs[Random.Range(0, propPrefabs.Length)];
+                Transform spawnPos = spawnPoints[Random.Range(0, spawnPoints.Length)];
+                var obj = Instantiate(selectedProp, spawnPos.position, spawnPos.rotation);
+                obj.transform.SetParent(transform);
             }
         }
     }

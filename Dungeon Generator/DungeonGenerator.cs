@@ -11,13 +11,14 @@ namespace AC
         public Vector2Int dungeonSize;
         public Vector2 dungeonOffset;
         public int dungeonLevels;
-        public GameObject levelRoom;
-        public GameObject finalRoom;
-        public GameObject[] fillerRoom;
+        public GameObject[] firstRooms;
+        public GameObject[] finalRooms;
+        public GameObject[] fillerRooms;
         public Room[] rooms;
 
         private List<Cell> board;
         private Vector2 newDungeonOffset;
+        private GameObject firstGeneratedRoom;
         private float dungeonYOffset;
         private int levelIndex;
         private bool isPlaying;
@@ -207,10 +208,19 @@ namespace AC
                             var newRoom = Instantiate(rooms[randomRoom].room, new Vector3(i * dungeonOffset.x + transform.position.x + newDungeonOffset.x, transform.position.y + dungeonYOffset, -j * dungeonOffset.y + transform.position.z + newDungeonOffset.y), Quaternion.identity, transform).GetComponent<RoomBehaviour>();
                             newRoom.UpdateRoom(currentCell.status);
                             newRoom.name += " " + i + "-" + j + " Level " + levelIndex;
+
+                            if (firstGeneratedRoom == null)
+                            {
+                                firstGeneratedRoom = newRoom.gameObject;
+                            }
                         } else {
-                            var newRoom = Instantiate(fillerRoom[levelIndex], new Vector3(i * dungeonOffset.x + transform.position.x + newDungeonOffset.x, transform.position.y + dungeonYOffset, -j * dungeonOffset.y + transform.position.z + newDungeonOffset.y), Quaternion.identity, transform).GetComponent<RoomBehaviour>();
+                            var newRoom = Instantiate(fillerRooms[levelIndex], new Vector3(i * dungeonOffset.x + transform.position.x + newDungeonOffset.x, transform.position.y + dungeonYOffset, -j * dungeonOffset.y + transform.position.z + newDungeonOffset.y), Quaternion.identity, transform).GetComponent<RoomBehaviour>();
                             newRoom.UpdateRoom(currentCell.status);
                             newRoom.name += " " + i + "-" + j + " Level " + levelIndex;
+                            if (firstGeneratedRoom == null)
+                            {
+                                firstGeneratedRoom = newRoom.gameObject;
+                            }
                         }
                     }
                 }
@@ -222,33 +232,46 @@ namespace AC
                 generatedRooms.Add(child.gameObject);
             }
 
-            GameObject replacedRoom = generatedRooms[generatedRooms.Count - 1];
+            GameObject firstRoom = firstGeneratedRoom;
+            GameObject finalRoom = generatedRooms[generatedRooms.Count - 1];
             if (dungeonLevels == levelIndex + 1) {
-                GameObject newFinalRoom = Instantiate(finalRoom, replacedRoom.transform.position, Quaternion.identity, transform);
-                newFinalRoom.GetComponent<RoomBehaviour>().UpdateRoom(replacedRoom.GetComponent<RoomBehaviour>().GetStatus());
-                newFinalRoom.name = "Final Room";
+                GameObject newFirstRoom = Instantiate(firstRooms[finalRooms.Length - 1], firstRoom.transform.position, Quaternion.identity, transform);
+                newFirstRoom.GetComponent<RoomBehaviour>().UpdateRoom(firstRoom.GetComponent<RoomBehaviour>().GetStatus());
+                newFirstRoom.name = "Start Room Level" + levelIndex;
+                
+                GameObject newFinalRoom = Instantiate(finalRooms[finalRooms.Length - 1], finalRoom.transform.position, Quaternion.identity, transform);
+                newFinalRoom.GetComponent<RoomBehaviour>().UpdateRoom(finalRoom.GetComponent<RoomBehaviour>().GetStatus());
+                newFinalRoom.name = "Final Room Level" + levelIndex;
             }
             else 
             {
-                GameObject newFinalRoom = Instantiate(levelRoom, replacedRoom.transform.position, Quaternion.identity, transform);
-                newFinalRoom.GetComponent<RoomBehaviour>().UpdateRoom(replacedRoom.GetComponent<RoomBehaviour>().GetStatus());
+                GameObject newFirstRoom = Instantiate(firstRooms[levelIndex], firstRoom.transform.position, Quaternion.identity, transform);
+                newFirstRoom.GetComponent<RoomBehaviour>().UpdateRoom(firstRoom.GetComponent<RoomBehaviour>().GetStatus());
+                newFirstRoom.name = "Start Room Level " + levelIndex;
+
+                GameObject newFinalRoom = Instantiate(finalRooms[levelIndex], finalRoom.transform.position, Quaternion.identity, transform);
+                newFinalRoom.GetComponent<RoomBehaviour>().UpdateRoom(finalRoom.GetComponent<RoomBehaviour>().GetStatus());
                 newFinalRoom.name = "Level Room Level " + levelIndex;
-                dungeonYOffset -= 10;
+                
+                dungeonYOffset -= 15;
                 levelIndex++;
                 dungeonSeed++;
                 newDungeonOffset.x = newFinalRoom.transform.position.x;
                 newDungeonOffset.y = newFinalRoom.transform.position.z;
+                firstGeneratedRoom = null;
                 GenerateMaze();
-                GenerateRooms();
+                GenerateRooms();     
             }
 
             if (isPlaying) 
             {
-                Destroy(replacedRoom);
+                Destroy(firstRoom);
+                Destroy(finalRoom);
             } 
             else 
             {
-                DestroyImmediate(replacedRoom);
+                DestroyImmediate(firstRoom);
+                DestroyImmediate(finalRoom);
             }
         }
 
@@ -262,7 +285,7 @@ namespace AC
                 probabilities[i] /= totalProbability;
             }
 
-            float randomValue = Random.value; // Using Random.value for consistency with normalized probabilities
+            float randomValue = Random.value;
             
             float cumulativeProbability = 0f;
             for (int i = 0; i < probabilities.Length; i++)
@@ -274,7 +297,6 @@ namespace AC
                 }
             }
 
-            // Fallback: Should ideally not reach here unless probabilities are not correctly normalized
             return probabilities.Length - 1;
         }
 

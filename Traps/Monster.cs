@@ -42,6 +42,7 @@ namespace AC
             if (closestPlayer != null)
             {
                 float distance = Vector3.Distance(transform.position, closestPlayer.transform.position);
+                
 
                 if (distance <= chaseDistance)
                 {
@@ -56,7 +57,7 @@ namespace AC
                         agent.isStopped = true;
                         Vector3 direction = (closestPlayer.transform.position - transform.position).normalized;
                         Quaternion lookRotation = Quaternion.LookRotation(direction);
-                        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * lookSpeed);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * lookSpeed);       
                     }
                     else
                     {
@@ -64,7 +65,6 @@ namespace AC
                         audioSync.ChangePitch(1.2f);
                         agent.isStopped = false;
                         agent.SetDestination(closestPlayer.transform.position);
-
                     }
                 }
                 else
@@ -87,7 +87,6 @@ namespace AC
             if (agent.isOnOffMeshLink)
             {
                 OffMeshLinkData data = agent.currentOffMeshLinkData;
-
                 Vector3 endPos = data.endPos + Vector3.up * agent.baseOffset;
 
                 agent.transform.position = Vector3.MoveTowards(agent.transform.position, endPos, agent.speed * Time.deltaTime);
@@ -123,10 +122,11 @@ namespace AC
             return closestPlayer;
         }
 
-       private void SetRandomDestination()
+        private void SetRandomDestination()
         {
             Vector3 randomPoint = RandomPointOnNavMesh();
             agent.SetDestination(randomPoint);
+
             if (isFlying)
                 randomBaseOffset = Random.Range(lowBaseOffset, highBaseOffset);
         }
@@ -183,6 +183,16 @@ namespace AC
             {
                 TakeDamage(other.GetComponent<TrapDamage>().damage);
             }
+
+            if (other.tag == "Fire") {
+                other.transform.GetComponent<NetworkObject>().Despawn(true);
+                audioSync.PlaySound(0);
+            }
+
+            if (other.tag == "Player") {
+                if (!other.GetComponent<Player>().isFlickering)
+                    StartCoroutine(other.GetComponent<Player>().FlickerLight());
+            }
         }
 
         public void TakeDamage(float damage)
@@ -192,7 +202,6 @@ namespace AC
             
             if (health.Value <= 0)
             {
-                anim.SetTrigger("Death");
                 StartCoroutine(Despawn());
             }
         }

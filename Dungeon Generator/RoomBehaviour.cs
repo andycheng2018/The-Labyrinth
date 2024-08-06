@@ -29,7 +29,7 @@ namespace AC
             if (traps.Length > 0) {
                 for (int i = 0; i < traps.Length; i++)
                 {
-                    bool setActive = Random.Range(0, 5) == 0;
+                    bool setActive = Random.Range(0, 3) == 0;
                     traps[i].SetActive(setActive);
                 }
             }
