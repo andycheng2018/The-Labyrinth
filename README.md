@@ -200,4 +200,7 @@ Check out the official trailer for *The Labyrinth* on YouTube:
 
 We value our community's feedback! Join our [Discord](https://discord.com/invite/bbrvsvSupV) to connect with other players, share feedback, discuss strategies, or get help with any issues.
 
+You can also check out an older build of *The Labyrinth* on [Itch.io](https://deleter2435.itch.io/the-labyrinth).
+
 ---
+
