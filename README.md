@@ -9,12 +9,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yourname/the-labyrinth/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/yourname/the-labyrinth/build.yml?label=build&style=flat-square" alt="Build Status">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/github/license/yourname/the-labyrinth?style=flat-square" alt="License">
-  </a>
   <a href="https://store.steampowered.com/app/2664560/The_Labyrinth/">
     <img src="https://img.shields.io/badge/Available_on_Steam-blue?style=flat-square" alt="Steam">
   </a>
@@ -31,6 +25,24 @@
 
 **Description**:  
 In *The Labyrinth*, your goal is simple: reach the coveted gold chest at the end of each dungeon level. However, the journey is fraught with dangers, from deadly creatures to traps and environmental hazards. Team up with friends in this co-op multiplayer adventure, solving puzzles and battling terrifying monsters along the way!
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/screen1.png" alt="The Labyrinth Gameplay 1" width="48%" />
+  <img src="screenshots/screen2.png" alt="The Labyrinth Gameplay 2" width="48%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screen3.png" alt="The Labyrinth Gameplay 3" width="48%" />
+  <img src="screenshots/screen4.png" alt="The Labyrinth Gameplay 4" width="48%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/screen5.png" alt="The Labyrinth Gameplay 5" width="48%" />
+</p>
 
 ---
 
@@ -175,14 +187,3 @@ In *The Labyrinth*, your goal is simple: reach the coveted gold chest at the end
 - **Stalagmite Trap**: Falling stalagmites add a dangerous element to caves.
 
 ---
-
-## 📦 Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourname/the-labyrinth.git
-cd the-labyrinth
-
-# Install dependencies (if any)
-# Run the game
-./run.sh  # or Unity command to launch
