@@ -195,3 +195,9 @@ Check out the official trailer for *The Labyrinth* on YouTube:
 - **Stalagmite Trap**: Falling stalagmites add a dangerous element to caves.
 
 ---
+
+## 💬 Community & Support
+
+We value our community's feedback! Join our [Discord](https://discord.com/invite/bbrvsvSupV) to connect with other players, share feedback, discuss strategies, or get help with any issues.
+
+---
