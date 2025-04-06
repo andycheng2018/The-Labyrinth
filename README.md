@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="The Labyrinth Banner" width="800"/>
+  <img src="banner.png" alt="The Labyrinth Banner" width="800"/>
 </p>
 
 <h1 align="center">🕯️ The Labyrinth</h1>
@@ -31,17 +31,17 @@ In *The Labyrinth*, your goal is simple: reach the coveted gold chest at the end
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/screen1.png" alt="The Labyrinth Gameplay 1" width="48%" />
-  <img src="screenshots/screen2.png" alt="The Labyrinth Gameplay 2" width="48%" />
+  <img src="screen1.png" alt="The Labyrinth Gameplay 1" width="48%" />
+  <img src="screen2.png" alt="The Labyrinth Gameplay 2" width="48%" />
 </p>
 
 <p align="center">
-  <img src="screenshots/screen3.png" alt="The Labyrinth Gameplay 3" width="48%" />
-  <img src="screenshots/screen4.png" alt="The Labyrinth Gameplay 4" width="48%" />
+  <img src="screen3.png" alt="The Labyrinth Gameplay 3" width="48%" />
+  <img src="screen4.png" alt="The Labyrinth Gameplay 4" width="48%" />
 </p>
 
 <p align="center">
-  <img src="screenshots/screen5.png" alt="The Labyrinth Gameplay 5" width="48%" />
+  <img src="screen5.png" alt="The Labyrinth Gameplay 5" width="48%" />
 </p>
 
 ---
