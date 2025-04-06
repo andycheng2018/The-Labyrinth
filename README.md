@@ -28,6 +28,14 @@ In *The Labyrinth*, your goal is simple: reach the coveted gold chest at the end
 
 ---
 
+## 📺 Watch the Trailer
+
+Check out the official trailer for *The Labyrinth* on YouTube:
+
+[![Watch the trailer](https://img.youtube.com/vi/DdZKDHxc2vs/0.jpg)](https://www.youtube.com/watch?v=DdZKDHxc2vs)
+
+---
+
 ## 📸 Screenshots
 
 <p align="center">
